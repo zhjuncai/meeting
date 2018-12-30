@@ -1,0 +1,29 @@
+debug: false
+
+spring:
+  application.name: meetings
+  jackson:
+    parser:
+      allow-unquoted-control-chars: true
+  jpa:
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.HANAColumnStoreDialect
+        generate_statistics: true
+        use_sql_comments: true
+      use-new-id-generator-mappings: true
+      naming.physical-strategy: org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl
+
+
+spring.profiles.active: local
+
+---
+spring:
+  profiles: local
+  datasource:
+    username: test
+    password: test123!
+    driver-class-name: org.postgresql.Driver
+    url: jdbc:postgresql://127.0.0.1:5432/das

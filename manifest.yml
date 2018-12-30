@@ -1,0 +1,39 @@
+---
+applications:
+- name: meetings
+  host: meetings
+  memory: 800M
+  path: target/meeting.jar
+  buildpack: https://github.com/cloudfoundry/java-buildpack.git#v4.6
+  # buildpack: sap_java_buildpack
+  # health-check-type: http
+  # health-check-http-endpoint: /health
+  env:
+    # Disable Spring Auto Reconfiguration
+    JBP_CONFIG_SPRING_AUTO_RECONFIGURATION: '{enabled: false}'
+    # Use the non-blocking /dev/urandom instead of the default to generate random numbers.
+    # When using Java community buildpack, increase startup times, especially when using Spring Boot.
+    JAVA_OPTS: -Djava.security.egd=file:///dev/./urandom
+    USER_ROUTE: 'https://meeting-users-course.cfapps.sap.hana.ondemand.com'
+  services:
+  - postgres-meeting
+  - applogs-meeting
+  - mq-meeting
+  - uaa-meeting
+
+- name: approuter
+  host: approuter-meeting
+  path: src/main/approuter
+  buildpack: https://github.com/cloudfoundry/nodejs-buildpack.git#v1.6.10
+  memory: 128M
+  env:
+    TENANT_HOST_PATTERN: "^(.*)-approuter.cfapps.sap.hana.ondemand.com"
+    destinations: >
+      [{
+         "name":"meeting-destination",
+         "url" :"https://meeting.cfapps.sap.hana.ondemand.com",
+         "forwardAuthToken": true}
+      ]
+  services:
+  - applogs-meeting
+  - uaa-meeting

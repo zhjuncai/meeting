@@ -1,0 +1,13 @@
+{
+  "welcomeFile": "index.html",
+  "routes": [{
+    "source": "^/meetings/api/",
+    "target": "/api/",
+    "destination": "meetings-destination",
+    "scope": "$XSAPPNAME.Display"
+  }, {
+    "source": "^/meetings",
+    "target": "/",
+    "destination": "meetings-destination"
+  }]
+}
