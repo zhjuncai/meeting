@@ -18,14 +18,19 @@
 
 	<properties>
 		<java.version>1.8</java.version>
+		<base.package>com.pharmagin.cf.meeting</base.package>
 		<sap.logging.version>2.1.1</sap.logging.version>
 		<logback.version>1.1.7</logback.version>
 		<spring.security.version>5.1.2.RELEASE</spring.security.version>
+
+		<springfox-version>2.6.0</springfox-version>
+		<swagger-version>2.2.2</swagger-version>
+		<!-- don't use ${project.basedir} here, otherwise profile is not triggered correctly.
+		${project.basedir}/ is added in the swagger plugins because relative path is not sufficient. -->
+		<swagger-spec-file>src/main/resources/rest-api.yaml</swagger-spec-file>
 	</properties>
 
 	<dependencies>
-
-
 		<dependency>
 			<groupId>javax.inject</groupId>
 			<artifactId>javax.inject</artifactId>
@@ -170,6 +175,19 @@
 				</exclusion>
 			</exclusions>
 		</dependency>
+
+		<!-- Swagger / Springfox Integration -->
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger2</artifactId>
+			<version>${springfox-version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.springfox</groupId>
+			<artifactId>springfox-swagger-ui</artifactId>
+			<version>${springfox-version}</version>
+		</dependency>
+
 		<!-- Testing -->
 		<dependency>
 			<groupId>org.hamcrest</groupId>
@@ -199,6 +217,15 @@
 
 	<build>
 		<finalName>meetings</finalName>
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>io.swagger</groupId>
+					<artifactId>swagger-codegen-maven-plugin</artifactId>
+					<version>${swagger-version}</version>
+				</plugin>
+			</plugins>
+		</pluginManagement>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -229,4 +256,84 @@
 		</plugins>
 	</build>
 
+	<profiles>
+		<profile>
+			<id>swagger-generation</id>
+			<activation>
+				<file>
+					<exists>${swagger-spec-file}</exists>
+				</file>
+			</activation>
+			<dependencyManagement>
+				<dependencies />
+			</dependencyManagement>
+			<build>
+				<plugins>
+					<!-- SWAGGER Code Generation -->
+					<plugin>
+						<groupId>io.swagger</groupId>
+						<artifactId>swagger-codegen-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<id>generate-sources</id>
+								<phase>generate-sources</phase>
+								<goals>
+									<goal>generate</goal>
+								</goals>
+								<configuration>
+									<language>spring</language>
+									<inputSpec>${project.basedir}/${swagger-spec-file}</inputSpec>
+									<modelPackage>${base.package}.dto</modelPackage>
+									<apiPackage>${base.package}.api</apiPackage>
+									<configOptions>
+										<sourceFolder>target/generated-sources/swagger</sourceFolder>
+										<dateLibrary>java8</dateLibrary>
+										<interfaceOnly>true</interfaceOnly>
+										<basePackage>${base.package}</basePackage>
+										<configPackage>${base.package}.config</configPackage>
+									</configOptions>
+									<output>${project.basedir}</output>
+								</configuration>
+							</execution>
+							<execution>
+								<id>generate-documentation</id>
+								<phase>generate-resources</phase>
+								<goals>
+									<goal>generate</goal>
+								</goals>
+								<configuration>
+									<language>swagger</language>
+									<inputSpec>${project.basedir}/${swagger-spec-file}</inputSpec>
+									<configOptions>
+										<sourceFolder>target/generated-sources/swagger</sourceFolder>
+										<dateLibrary>java8</dateLibrary>
+									</configOptions>
+									<output>target/generated-sources/swagger</output>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					<!-- As swagger generates code in src/main/generated we have to add this
+                    source directory to our build path. This is achieved with this maven plugin -->
+					<plugin>
+						<groupId>org.codehaus.mojo</groupId>
+						<artifactId>build-helper-maven-plugin</artifactId>
+						<executions>
+							<execution>
+								<phase>generate-sources</phase>
+								<goals>
+									<goal>add-source</goal>
+								</goals>
+								<configuration>
+									<sources>
+										<source>target/generated-sources/swagger</source>
+									</sources>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
 </project>
